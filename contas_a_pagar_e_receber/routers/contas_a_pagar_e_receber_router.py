@@ -23,10 +23,10 @@ class ContaPagarReceberRequest(BaseModel):
 def lista_contas():
     return [
         ContaPagarReceberResponse(
-            id=1, descricao="aluguel", valor=1000.50, tipo="PAGAR"
+            id=1, descricao="aluguel", valor=Decimal(1000.50), tipo="PAGAR"
         ),
         ContaPagarReceberResponse(
-            id=1, descricao="Salario", valor=5000, tipo="RECEBER"
+            id=1, descricao="Salario", valor=Decimal(5000.0), tipo="RECEBER"
         ),
     ]
 
