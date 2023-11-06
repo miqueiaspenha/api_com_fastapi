@@ -12,7 +12,7 @@
             "port": 5432,
             "driver": "PostgreSQL",
             "name": "local",
-            "database": "postgres",
+            "database": "db_fast_api_zero_ate_deploy",
             "username": "postgres",
             "password": "default"
         }
