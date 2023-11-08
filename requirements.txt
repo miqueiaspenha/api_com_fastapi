@@ -5,3 +5,6 @@ psycopg2==2.9.9
 
 #TESTS
 pytest==7.4.3
+
+#TOOLS
+alembic==1.12.1
