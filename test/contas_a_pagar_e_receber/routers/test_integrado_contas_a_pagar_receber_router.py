@@ -66,7 +66,6 @@ def test_deve_retornar_uma_conta_a_pagar_e_receber():
     assert response_get.json() == conta_a_pagar_e_receber_copy
 
 
-
 def test_deve_criar_conta_a_pagar_e_receber():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
