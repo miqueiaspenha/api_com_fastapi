@@ -1,1 +1,0 @@
-CREATE DATABASE db_fast_api_zero_ate_deploy

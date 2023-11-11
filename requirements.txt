@@ -1,14 +1,14 @@
-fastapi<1
-uvicorn<1
-requests<3
-httpx
-SQLAlchemy<2
-psycopg2<3
-pydantic<2
+fastapi<1.0
+uvicorn<1.0
+requests<3.0
+httpx<1.0
+SQLAlchemy<2.0
+psycopg2<3.0
+pydantic<2.0
 
 #TESTS
-pytest<8
+pytest<8.0
 
 #TOOLS
-alembic<2
-pre-commit
+alembic<2.0
+pre-commit<4.0
