@@ -15,6 +15,13 @@
             "database": "db_fast_api_zero_ate_deploy",
             "username": "postgres",
             "password": "default"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "sqlite-local",
+            "database": "${workspaceFolder:api_com_fastapi}/test.db"
         }
-    ]
+    ],
+    "sqltools.useNodeRuntime": true
 }

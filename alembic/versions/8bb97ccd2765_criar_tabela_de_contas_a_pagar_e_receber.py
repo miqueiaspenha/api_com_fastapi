@@ -1,7 +1,7 @@
 """Criar tabela de contas a pagar e receber
 
 Revision ID: 8bb97ccd2765
-Revises: 
+Revises:
 Create Date: 2023-11-07 20:59:10.742264
 
 """

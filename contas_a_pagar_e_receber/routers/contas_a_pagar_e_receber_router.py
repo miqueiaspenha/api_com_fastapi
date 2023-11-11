@@ -1,16 +1,21 @@
 from decimal import Decimal
 from typing import List, Sequence
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, condecimal
 from sqlalchemy.orm import Session
 from contas_a_pagar_e_receber.models.conta_a_pagar_e_receber_model import (
     ContaPagarReceber,
 )
+from enum import  Enum
 
 from shared.dependencies import get_db
 
 router = APIRouter(prefix="/contas-a-pagar-e-receber")
 
+
+class ContaPagarReceberTipoEnum(str, Enum):
+    PAGAR = 'PAGAR'
+    RECEBER = 'RECEBER'
 
 class ContaPagarReceberResponse(BaseModel):
     id: int
@@ -19,13 +24,13 @@ class ContaPagarReceberResponse(BaseModel):
     tipo: str  # PAGAR e RECEBER
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class ContaPagarReceberRequest(BaseModel):
-    descricao: str
-    valor: Decimal
-    tipo: str  # PAGAR e RECEBER
+    descricao: str = Field(min_length=3, max_length=30)
+    valor: Decimal = Field(gt=0)
+    tipo: ContaPagarReceberTipoEnum
 
 
 @router.get("/", response_model=List[ContaPagarReceberResponse])
@@ -39,7 +44,7 @@ def criar_conta(
     db: Session = Depends(get_db),
 ) -> ContaPagarReceberResponse:
     contas_a_pagar_e_receber = ContaPagarReceber(
-        **conta_a_pagar_e_receber_request.model_dump()
+        **conta_a_pagar_e_receber_request.dict()
     )
     db.add(contas_a_pagar_e_receber)
     db.commit()
