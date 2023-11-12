@@ -66,6 +66,14 @@ def test_deve_retornar_uma_conta_a_pagar_e_receber():
     assert response_get.json() == conta_a_pagar_e_receber_copy
 
 
+def test_deve_retornar_nao_encontrado_para_id_nao_existente():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
+    response_get = client.get("/contas-a-pagar-e-receber/100")
+    assert response_get.status_code == 404
+
+
 def test_deve_criar_conta_a_pagar_e_receber():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
@@ -95,6 +103,14 @@ def test_deve_atualizar_conta_a_pagar_e_receber():
     assert response_put.status_code == 200
     assert response_put.json()["valor"] == 111
 
+def test_deve_retornar_nao_encontrado_para_id_nao_existente_na_atalizacao():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
+    response_get = client.put("/contas-a-pagar-e-receber/100", json={
+        "descricao": "Curso de Python", "valor": 333, "tipo": "PAGAR"
+    })
+    assert response_get.status_code == 404
 
 def test_deve_apagar_conta_apagar_e_receber():
     Base.metadata.drop_all(bind=engine)
@@ -103,13 +119,18 @@ def test_deve_apagar_conta_apagar_e_receber():
     response_post = client.post("/contas-a-pagar-e-receber", json={
         "descricao": "Curso de Python", "valor": 111, "tipo": "PAGAR"
     })
-
     contas_a_pagar_e_receber_id = response_post.json()["id"]
 
     response_delete = client.delete(f"/contas-a-pagar-e-receber/{contas_a_pagar_e_receber_id}")
-
     assert response_delete.status_code == 204
 
+
+def test_deve_retornar_nao_encontrado_paa_id_nao_existente_na_remocao():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
+    response_delete = client.delete("/contas-a-pagar-e-receber/100")
+    assert response_delete.status_code == 404
 
 def test_deve_retornar_erro_quando_exceder_a_descricao():
     Base.metadata.drop_all(bind=engine)

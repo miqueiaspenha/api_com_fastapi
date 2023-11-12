@@ -10,6 +10,7 @@ from contas_a_pagar_e_receber.models.conta_a_pagar_e_receber_model import (
     ContaPagarReceber,
 )
 from shared.dependencies import get_db
+from shared.exceptions import NotFound
 
 router = APIRouter(prefix="/contas-a-pagar-e-receber")
 
@@ -42,8 +43,8 @@ def lista_contas(db: Session = Depends(get_db)) -> Sequence[ContaPagarReceberRes
 
 @router.get("/{id_conta_a_pagar_e_receber}", response_model=ContaPagarReceberResponse, status_code=200)
 def listar_conta(id_conta_a_pagar_e_receber: int, db: Session = Depends(get_db)) -> ContaPagarReceberResponse:
-    contas_a_pagar_e_receber: ContaPagarReceber = db.query(ContaPagarReceber).get(id_conta_a_pagar_e_receber)
-    return contas_a_pagar_e_receber
+    conta_a_pagar_e_receber: ContaPagarReceber = busca_conta_por_id(id_conta_a_pagar_e_receber, db)
+    return conta_a_pagar_e_receber
 
 
 @router.post("/", response_model=ContaPagarReceberResponse, status_code=201)
@@ -64,21 +65,31 @@ def criar_conta(
 @router.put("/{id_conta_a_pagar_e_receber}", response_model=ContaPagarReceberResponse, status_code=200)
 def atualizar_conta(id_conta_a_pagar_e_receber: int, conta_a_pagar_e_receber_request: ContaPagarReceberRequest,
                     db: Session = Depends(get_db)) -> ContaPagarReceberResponse:
-    contas_a_pagar_e_receber: ContaPagarReceber = db.query(ContaPagarReceber).get(id_conta_a_pagar_e_receber)
-    contas_a_pagar_e_receber.tipo = conta_a_pagar_e_receber_request.tipo
-    contas_a_pagar_e_receber.valor = conta_a_pagar_e_receber_request.valor
-    contas_a_pagar_e_receber.descricao = conta_a_pagar_e_receber_request.descricao
+    conta_a_pagar_e_receber = busca_conta_por_id(id_conta_a_pagar_e_receber, db)
 
-    db.add(contas_a_pagar_e_receber)
+    conta_a_pagar_e_receber.tipo = conta_a_pagar_e_receber_request.tipo
+    conta_a_pagar_e_receber.valor = conta_a_pagar_e_receber_request.valor
+    conta_a_pagar_e_receber.descricao = conta_a_pagar_e_receber_request.descricao
+
+    db.add(conta_a_pagar_e_receber)
     db.commit()
-    db.refresh(contas_a_pagar_e_receber)
+    db.refresh(conta_a_pagar_e_receber)
 
-    return contas_a_pagar_e_receber
+    return conta_a_pagar_e_receber
 
 
 @router.delete("/{id_conta_a_pagar_e_receber}", status_code=204)
 def deletar_conta(id_conta_a_pagar_e_receber: int,
                   db: Session = Depends(get_db)) -> None:
-    contas_a_pagar_e_receber = db.query(ContaPagarReceber).get(id_conta_a_pagar_e_receber)
-    db.delete(contas_a_pagar_e_receber)
+    conta_a_pagar_e_receber = busca_conta_por_id(id_conta_a_pagar_e_receber, db)
+    db.delete(conta_a_pagar_e_receber)
     db.commit()
+
+
+def busca_conta_por_id(id_conta_a_pagar_e_receber: int, db: Session) -> ContaPagarReceber:
+    conta_a_pagar_e_receber: ContaPagarReceber = db.query(ContaPagarReceber).get(id_conta_a_pagar_e_receber)
+
+    if conta_a_pagar_e_receber is None:
+        raise NotFound(name="Conta a Pagar e Receber")
+
+    return conta_a_pagar_e_receber
