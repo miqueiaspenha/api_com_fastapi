@@ -1,15 +1,16 @@
 from logging.config import fileConfig
 
+from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from alembic import context
-
-from shared.database import Base
-
+# noinspection PyUnresolvedReferences
 from contas_a_pagar_e_receber.models.conta_a_pagar_e_receber_model import (
     ContaPagarReceber,
 )
+# noinspection PyUnresolvedReferences
+from contas_a_pagar_e_receber.models.fornecedor_client import FornecedorCliente
+from shared.database import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -25,6 +26,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
