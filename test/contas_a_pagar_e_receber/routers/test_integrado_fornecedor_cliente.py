@@ -46,15 +46,12 @@ def test_deve_listar_fornecdor_cliente():
     ]
 
 
-def test_deve_retornar_um_fornecedor_cliente():
+def test_deve_retornar_por_id_um_fornecedor_cliente():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
     response_post = client.post("/fornecedor-cliente", json={"nome": "CPFL"})
-
     id_fornecedor_cliente = response_post.json()["id"]
-
-    print(f"/fornecedor-cliente/{id_fornecedor_cliente}")
 
     response_get = client.get(f"/fornecedor-cliente/{id_fornecedor_cliente}")
     assert response_get.status_code == 200
@@ -119,6 +116,10 @@ def test_deve_apagar_fornecedor_cliente():
 
     response_delete = client.delete(f"/fornecedor-cliente/{id_cliente_fornecedor}")
     assert response_delete.status_code == 204
+
+    response_get_all = client.get("/fornecedor-cliente")
+
+    assert len(response_get_all.json()) == 0
 
 
 def test_deve_retornar_nao_encontrado_para_id_fornecedor_cliente_na_remocao():
