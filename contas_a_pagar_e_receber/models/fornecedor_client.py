@@ -4,7 +4,7 @@ from shared.database import Base
 
 
 class FornecedorCliente(Base):
-    __tablename__ = "fonecedor_client"
+    __tablename__ = "fonecedor_cliente"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     nome = Column(String(255))

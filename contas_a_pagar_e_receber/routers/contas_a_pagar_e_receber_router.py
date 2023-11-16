@@ -34,6 +34,7 @@ class ContaPagarReceberRequest(BaseModel):
     descricao: str = Field(min_length=3, max_length=30)
     valor: Decimal = Field(gt=0)
     tipo: ContaPagarReceberTipoEnum
+    fornecedor_cliente_id: int | None = None
 
 
 @router.get("/", response_model=List[ContaPagarReceberResponse])

@@ -23,4 +23,4 @@ app.include_router(fornecedor_cliente_router.router)
 app.add_exception_handler(NotFound, not_found_exception_handler)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8081)
+    uvicorn.run("main:app", host="0.0.0.0", port=8081, reload=True)
