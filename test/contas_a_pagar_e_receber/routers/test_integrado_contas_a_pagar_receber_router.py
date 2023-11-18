@@ -27,7 +27,8 @@ def override_get_db():
     finally:
         db.close()
 
-    app.dependency_overrides[get_db] = override_get_db
+
+app.dependency_overrides[get_db] = override_get_db
 
 
 def test_deve_listar_contas_a_pagar_e_receber():
@@ -43,8 +44,20 @@ def test_deve_listar_contas_a_pagar_e_receber():
     response = client.get("/contas-a-pagar-e-receber")
     assert response.status_code == 200
     assert response.json() == [
-        {"id": 1, "descricao": "aluguel", "valor": 1000.5, "tipo": "PAGAR"},
-        {"id": 2, "descricao": "Salario", "valor": 5000, "tipo": "RECEBER"},
+        {
+            "id": 1,
+            "descricao": "aluguel",
+            "valor": 1000.5,
+            "tipo": "PAGAR",
+            "fornecedor": None,
+        },
+        {
+            "id": 2,
+            "descricao": "Salario",
+            "valor": 5000,
+            "tipo": "RECEBER",
+            "fornecedor": None,
+        },
     ]
 
 
@@ -52,7 +65,12 @@ def test_deve_retornar_uma_conta_a_pagar_e_receber():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
-    conta_a_pagar_e_receber = {"descricao": "aluguel", "valor": 1000.5, "tipo": "PAGAR"}
+    conta_a_pagar_e_receber = {
+        "descricao": "aluguel",
+        "valor": 1000.5,
+        "tipo": "PAGAR",
+        "fornecedor": None,
+    }
 
     response_post = client.post(
         "/contas-a-pagar-e-receber", json=conta_a_pagar_e_receber
@@ -78,7 +96,12 @@ def test_deve_retornar_nao_encontrado_para_id_nao_existente():
 def test_deve_criar_conta_a_pagar_e_receber():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
-    nova_conta = {"descricao": "Curso de Python", "valor": 333, "tipo": "PAGAR"}
+    nova_conta = {
+        "descricao": "Curso de Python",
+        "valor": 333,
+        "tipo": "PAGAR",
+        "fornecedor": None,
+    }
 
     response = client.post(
         "/contas-a-pagar-e-receber",
@@ -159,6 +182,8 @@ def test_deve_retornar_erro_quando_exceder_a_descricao():
 
 
 def test_deve_retornar_erro_quando_descricao_for_menor_que_o_necessario():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
     response = client.post(
         "/contas-a-pagar-e-receber",
         json={"descricao": "ab", "valor": 333, "tipo": "PAGAR"},
@@ -167,6 +192,8 @@ def test_deve_retornar_erro_quando_descricao_for_menor_que_o_necessario():
 
 
 def test_deve_retornar_erro_quando_o_valor_for_zero_ou_menor():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
     response = client.post(
         "/contas-a-pagar-e-receber",
         json={"descricao": "Lorem Ipsum", "valor": 0, "tipo": "PAGAR"},
@@ -181,8 +208,95 @@ def test_deve_retornar_erro_quando_o_valor_for_zero_ou_menor():
 
 
 def test_deve_retornar_erro_quando_o_tipo_for_invalido():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
     response = client.post(
         "/contas-a-pagar-e-receber",
         json={"descricao": "Test", "valor": 100, "tipo": "INVALIDO"},
     )
     assert response.status_code == 422
+
+
+def test_deve_criar_conta_a_pagar_e_receber_com_fornedor():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    client.post("/fornecedor-cliente", json={"nome": "CPFL"})
+    response_post = client.post(
+        "/contas-a-pagar-e-receber",
+        json={
+            "descricao": "Curso de Python",
+            "valor": 111,
+            "tipo": "PAGAR",
+            "fornecedor_cliente_id": 1
+        })
+    assert response_post.status_code == 201
+    assert response_post.json() == {
+        "id": 1,
+        "descricao": "Curso de Python",
+        "valor": 111,
+        "tipo": "PAGAR",
+        "fornecedor": {
+            "id": 1,
+            "nome": "CPFL"
+        }
+    }
+
+
+def test_deve_retornar_erro_ao_inserir_uma_nova_conta_com_fornecedor_invalido():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    response_post = client.post("/contas-a-pagar-e-receber", json={
+        "descricao": "Curso de Python",
+        "valor": 111,
+        "tipo": "PAGAR",
+        "fornecedor_cliente_id": 1000
+    })
+    assert response_post.status_code == 404
+
+
+def test_deve_atualizar_conta_a_pagar_com_forncedor_client():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    client.post("/fornecedor-cliente", json={"nome": "CPFL"})
+    client.post(
+        "/contas-a-pagar-e-receber",
+        json={
+            "descricao": "Curso de Python",
+            "valor": 111,
+            "tipo": "PAGAR",
+            "fornecedor_cliente_id": 1
+        })
+    response_put = client.put("/contas-a-pagar-e-receber/1", json={
+        "descricao": "Curso de Python",
+        "valor": 111,
+        "tipo": "PAGAR",
+        "fornecedor_cliente_id": 1
+    })
+    assert response_put.status_code == 200
+    assert response_put.json() == {
+        "id": 1,
+        "descricao": "Curso de Python",
+        "valor": 111,
+        "tipo": "PAGAR",
+        "fornecedor": {
+            "id": 1,
+            "nome": "CPFL"
+        }
+    }
+
+def test_deve_retornar_erro_ao_atualizar_uma_conta_com_fornecedor_invalido():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    client.post("/contas-a-pagar-e-receber", json={
+        "descricao": "Curso de Python",
+        "valor": 111,
+        "tipo": "PAGAR",
+        "fornecedor_cliente_id": None
+    })
+    response_put = client.put("/contas-a-pagar-e-receber/1", json={
+        "descricao": "Curso de Python",
+        "valor": 111,
+        "tipo": "PAGAR",
+        "fornecedor_cliente_id": 1000
+    })
+    assert response_put.status_code == 404

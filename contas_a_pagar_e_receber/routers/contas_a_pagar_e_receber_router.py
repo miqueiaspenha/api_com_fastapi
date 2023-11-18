@@ -1,13 +1,17 @@
 from decimal import Decimal
 from enum import Enum
-from typing import Any, List, Sequence
+from typing import List, Sequence
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from contas_a_pagar_e_receber.models.conta_a_pagar_e_receber_model import (
     ContaPagarReceber,
+)
+from contas_a_pagar_e_receber.models.fornecedor_client import FornecedorCliente
+from contas_a_pagar_e_receber.routers.fornecedor_cliente_router import (
+    FornecedorClienteResponse,
 )
 from shared.dependencies import get_db
 from shared.exceptions import NotFound
@@ -25,6 +29,7 @@ class ContaPagarReceberResponse(BaseModel):
     descricao: str
     valor: Decimal
     tipo: str
+    fornecedor: FornecedorClienteResponse | None = None
 
     class Config:
         orm_mode = True
@@ -47,7 +52,9 @@ def lista_contas(db: Session = Depends(get_db)) -> Sequence[ContaPagarReceberRes
     response_model=ContaPagarReceberResponse,
     status_code=200,
 )
-def listar_conta(id_conta_a_pagar_e_receber: int, db: Session = Depends(get_db)) -> Any:
+def listar_conta(
+    id_conta_a_pagar_e_receber: int, db: Session = Depends(get_db)
+) -> ContaPagarReceber:
     conta_a_pagar_e_receber: ContaPagarReceber = busca_conta_por_id(
         id_conta_a_pagar_e_receber, db
     )
@@ -58,7 +65,8 @@ def listar_conta(id_conta_a_pagar_e_receber: int, db: Session = Depends(get_db))
 def criar_conta(
     conta_a_pagar_e_receber_request: ContaPagarReceberRequest,
     db: Session = Depends(get_db),
-) -> Any:
+) -> ContaPagarReceber:
+    valida_fornecedor(conta_a_pagar_e_receber_request.fornecedor_cliente_id, db)
     contas_a_pagar_e_receber: ContaPagarReceber = ContaPagarReceber(
         **conta_a_pagar_e_receber_request.dict()
     )
@@ -78,14 +86,13 @@ def atualizar_conta(
     id_conta_a_pagar_e_receber: int,
     conta_a_pagar_e_receber_request: ContaPagarReceberRequest,
     db: Session = Depends(get_db),
-) -> Any:
+) -> ContaPagarReceber:
+    valida_fornecedor(conta_a_pagar_e_receber_request.fornecedor_cliente_id, db)
     conta_a_pagar_e_receber: ContaPagarReceber = busca_conta_por_id(
         id_conta_a_pagar_e_receber, db
     )
-    conta_a_pagar_e_receber.tipo = conta_a_pagar_e_receber_request.tipo
-    conta_a_pagar_e_receber.valor = conta_a_pagar_e_receber_request.valor
-    conta_a_pagar_e_receber.descricao = conta_a_pagar_e_receber_request.descricao
-
+    for key, value in conta_a_pagar_e_receber_request.__dict__.items():
+        setattr(conta_a_pagar_e_receber, key, value)
     db.add(conta_a_pagar_e_receber)
     db.commit()
     db.refresh(conta_a_pagar_e_receber)
@@ -115,3 +122,12 @@ def busca_conta_por_id(
         raise NotFound(name="Conta a Pagar e Receber")
 
     return conta_a_pagar_e_receber
+
+
+def valida_fornecedor(fornecedor_cliente_id: int, db: Session) -> None:
+    if fornecedor_cliente_id is not None:
+        fornecedor_cliente: FornecedorCliente = db.query(FornecedorCliente).get(
+            fornecedor_cliente_id
+        )
+        if fornecedor_cliente is None:
+            raise HTTPException(status_code=404, detail="Fornecedor não encontrado")

@@ -24,20 +24,28 @@ class FornecedorClienteRequest(BaseModel):
 
 
 @router.get("", response_model=List[FornecedorClienteResponse])
-def listar_fornecedor_client(db: Session = Depends(get_db)) -> List[FornecedorClienteResponse]:
+def listar_fornecedor_client(
+    db: Session = Depends(get_db),
+) -> List[FornecedorClienteResponse]:
     return db.query(FornecedorCliente).all()
 
 
-@router.get("/{id_do_fornecedor_cliente}", response_model=FornecedorClienteResponse, status_code=200)
-def obter_fornecedor_cliente_por_id(id_do_fornecedor_cliente: int,
-                                    db: Session = Depends(get_db)) -> List[FornecedorClienteResponse]:
+@router.get(
+    "/{id_do_fornecedor_cliente}",
+    response_model=FornecedorClienteResponse,
+    status_code=200,
+)
+def obter_fornecedor_cliente_por_id(
+    id_do_fornecedor_cliente: int, db: Session = Depends(get_db)
+) -> List[FornecedorClienteResponse]:
     return buscar_fornecedor_cliente_por_id(id_do_fornecedor_cliente, db)
 
 
 @router.post("", response_model=FornecedorClienteResponse, status_code=201)
-def criar_fornecedor_cliente(fornecedor_cliente_request: FornecedorClienteRequest,
-                             db: Session = Depends(get_db)) -> FornecedorClienteResponse:
-    fornecedor_cliente = FornecedorCliente(
+def criar_fornecedor_cliente(
+    fornecedor_cliente_request: FornecedorClienteRequest, db: Session = Depends(get_db)
+) -> FornecedorClienteResponse:
+    fornecedor_cliente: FornecedorCliente = FornecedorCliente(
         **fornecedor_cliente_request.dict()
     )
 
@@ -48,9 +56,16 @@ def criar_fornecedor_cliente(fornecedor_cliente_request: FornecedorClienteReques
     return fornecedor_cliente
 
 
-@router.put("/{id_do_fornecedor_cliente}", response_model=FornecedorClienteResponse, status_code=200)
-def atualizar_forncedor_cliente(id_do_fornecedor_cliente: int, fornecedor_cliente_request: FornecedorClienteRequest,
-                                db: Session = Depends(get_db)) -> FornecedorClienteResponse:
+@router.put(
+    "/{id_do_fornecedor_cliente}",
+    response_model=FornecedorClienteResponse,
+    status_code=200,
+)
+def atualizar_forncedor_cliente(
+    id_do_fornecedor_cliente: int,
+    fornecedor_cliente_request: FornecedorClienteRequest,
+    db: Session = Depends(get_db),
+) -> FornecedorClienteResponse:
     fornecedor_cliente = buscar_fornecedor_cliente_por_id(id_do_fornecedor_cliente, db)
 
     fornecedor_cliente.nome = fornecedor_cliente_request.nome
@@ -63,7 +78,9 @@ def atualizar_forncedor_cliente(id_do_fornecedor_cliente: int, fornecedor_client
 
 
 @router.delete("/{id_do_fornecedor_cliente}", status_code=204)
-def deletar_fornecedor_cliente(id_do_fornecedor_cliente: int, db: Session = Depends(get_db)) -> None:
+def deletar_fornecedor_cliente(
+    id_do_fornecedor_cliente: int, db: Session = Depends(get_db)
+) -> None:
     fornecedor_cliente = buscar_fornecedor_cliente_por_id(id_do_fornecedor_cliente, db)
 
     db.delete(fornecedor_cliente)

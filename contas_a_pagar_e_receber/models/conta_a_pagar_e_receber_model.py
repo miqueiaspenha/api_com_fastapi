@@ -14,3 +14,8 @@ class ContaPagarReceber(Base):
 
     fornecedor_cliente_id = Column(Integer, ForeignKey("fonecedor_cliente.id"))
     fornecedor = relationship("FornecedorCliente")
+
+    def update(self, **kwargs):
+        print(kwargs)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
