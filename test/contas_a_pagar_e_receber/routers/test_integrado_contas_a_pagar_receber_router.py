@@ -50,6 +50,9 @@ def test_deve_listar_contas_a_pagar_e_receber():
             "valor": 1000.5,
             "tipo": "PAGAR",
             "fornecedor": None,
+            "valor_baixa": None,
+            "data_baixa": None,
+            "esta_baixada": False,
         },
         {
             "id": 2,
@@ -57,6 +60,9 @@ def test_deve_listar_contas_a_pagar_e_receber():
             "valor": 5000,
             "tipo": "RECEBER",
             "fornecedor": None,
+            "valor_baixa": None,
+            "data_baixa": None,
+            "esta_baixada": False,
         },
     ]
 
@@ -80,6 +86,9 @@ def test_deve_retornar_uma_conta_a_pagar_e_receber():
     response_get = client.get(f"/contas-a-pagar-e-receber/{id_conta_a_pagar_e_receber}")
     conta_a_pagar_e_receber_copy = conta_a_pagar_e_receber.copy()
     conta_a_pagar_e_receber_copy["id"] = 1
+    conta_a_pagar_e_receber_copy["valor_baixa"] = None
+    conta_a_pagar_e_receber_copy["data_baixa"] = None
+    conta_a_pagar_e_receber_copy["esta_baixada"] = False
 
     assert response_get.status_code == 200
     assert response_get.json() == conta_a_pagar_e_receber_copy
@@ -111,6 +120,9 @@ def test_deve_criar_conta_a_pagar_e_receber():
     assert response.status_code == 201
     nova_conta_copy = nova_conta.copy()
     nova_conta_copy["id"] = 1
+    nova_conta_copy["valor_baixa"] = None
+    nova_conta_copy["data_baixa"] = None
+    nova_conta_copy["esta_baixada"] = False
     assert response.json() == nova_conta_copy
 
 
@@ -128,6 +140,38 @@ def test_deve_atualizar_conta_a_pagar_e_receber():
     )
     assert response_put.status_code == 200
     assert response_put.json()["valor"] == 111
+
+
+def test_deve_baixar_conta():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    client.post(
+        "/contas-a-pagar-e-receber",
+        json={"descricao": "Curso de Python", "valor": 333, "tipo": "PAGAR"},
+    )
+    response_post = client.post("/contas-a-pagar-e-receber/1/baixar")
+    assert response_post.status_code == 200
+    assert response_post.json()["esta_baixada"] is True
+    assert response_post.json()["valor_baixa"] == 333
+
+
+def test_deve_baixar_conta_atualizada():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    client.post(
+        "/contas-a-pagar-e-receber",
+        json={"descricao": "Curso de Python", "valor": 333, "tipo": "PAGAR"},
+    )
+    client.post("/contas-a-pagar-e-receber/1/baixar")
+    client.put(
+        f"/contas-a-pagar-e-receber/1",
+        json={"descricao": "Curso de Python", "valor": 444, "tipo": "PAGAR"},
+    )
+    response_post = client.post("/contas-a-pagar-e-receber/1/baixar")
+    assert response_post.status_code == 200
+    assert response_post.json()["esta_baixada"] is True
+    assert response_post.json()["valor"] == 444
+    assert response_post.json()["valor_baixa"] == 444
 
 
 def test_deve_retornar_nao_encontrado_para_id_nao_existente_na_atalizacao():
@@ -172,10 +216,13 @@ def test_deve_retornar_erro_quando_exceder_a_descricao():
         "/contas-a-pagar-e-receber",
         json={
             "descricao": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum "
-                         "has been the industry's standard dummy text ever since the 1500s, when an unknown printer "
-                         "took a galley of type and scrambled it to make a type specimen book. ",
+            "has been the industry's standard dummy text ever since the 1500s, when an unknown printer "
+            "took a galley of type and scrambled it to make a type specimen book. ",
             "valor": 333,
             "tipo": "PAGAR",
+            "valor_baixa": None,
+            "data_baixa": None,
+            "esta_baixada": False,
         },
     )
     assert reponse.status_code == 422
@@ -227,30 +274,34 @@ def test_deve_criar_conta_a_pagar_e_receber_com_fornedor():
             "descricao": "Curso de Python",
             "valor": 111,
             "tipo": "PAGAR",
-            "fornecedor_cliente_id": 1
-        })
+            "fornecedor_cliente_id": 1,
+        },
+    )
     assert response_post.status_code == 201
     assert response_post.json() == {
         "id": 1,
         "descricao": "Curso de Python",
         "valor": 111,
         "tipo": "PAGAR",
-        "fornecedor": {
-            "id": 1,
-            "nome": "CPFL"
-        }
+        "fornecedor": {"id": 1, "nome": "CPFL"},
+        "valor_baixa": None,
+        "data_baixa": None,
+        "esta_baixada": False,
     }
 
 
 def test_deve_retornar_erro_ao_inserir_uma_nova_conta_com_fornecedor_invalido():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
-    response_post = client.post("/contas-a-pagar-e-receber", json={
-        "descricao": "Curso de Python",
-        "valor": 111,
-        "tipo": "PAGAR",
-        "fornecedor_cliente_id": 1000
-    })
+    response_post = client.post(
+        "/contas-a-pagar-e-receber",
+        json={
+            "descricao": "Curso de Python",
+            "valor": 111,
+            "tipo": "PAGAR",
+            "fornecedor_cliente_id": 1000,
+        },
+    )
     assert response_post.status_code == 404
 
 
@@ -264,40 +315,50 @@ def test_deve_atualizar_conta_a_pagar_com_forncedor_client():
             "descricao": "Curso de Python",
             "valor": 111,
             "tipo": "PAGAR",
-            "fornecedor_cliente_id": None
-        })
-    response_put = client.put("/contas-a-pagar-e-receber/1", json={
-        "descricao": "Curso de Python 1",
-        "valor": 1111,
-        "tipo": "PAGAR",
-        "fornecedor_cliente_id": 1
-    })
+            "fornecedor_cliente_id": None,
+        },
+    )
+    response_put = client.put(
+        "/contas-a-pagar-e-receber/1",
+        json={
+            "descricao": "Curso de Python 1",
+            "valor": 1111,
+            "tipo": "PAGAR",
+            "fornecedor_cliente_id": 1,
+        },
+    )
     assert response_put.status_code == 200
     assert response_put.json() == {
         "id": 1,
         "descricao": "Curso de Python 1",
         "valor": 1111,
         "tipo": "PAGAR",
-        "fornecedor": {
-            "id": 1,
-            "nome": "CPFL"
-        }
+        "fornecedor": {"id": 1, "nome": "CPFL"},
+        "valor_baixa": None,
+        "data_baixa": None,
+        "esta_baixada": False,
     }
 
 
 def test_deve_retornar_erro_ao_atualizar_uma_conta_com_fornecedor_invalido():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
-    client.post("/contas-a-pagar-e-receber", json={
-        "descricao": "Curso de Python",
-        "valor": 111,
-        "tipo": "PAGAR",
-        "fornecedor_cliente_id": None
-    })
-    response_put = client.put("/contas-a-pagar-e-receber/1", json={
-        "descricao": "Curso de Python",
-        "valor": 111,
-        "tipo": "PAGAR",
-        "fornecedor_cliente_id": 1000
-    })
+    client.post(
+        "/contas-a-pagar-e-receber",
+        json={
+            "descricao": "Curso de Python",
+            "valor": 111,
+            "tipo": "PAGAR",
+            "fornecedor_cliente_id": None,
+        },
+    )
+    response_put = client.put(
+        "/contas-a-pagar-e-receber/1",
+        json={
+            "descricao": "Curso de Python",
+            "valor": 111,
+            "tipo": "PAGAR",
+            "fornecedor_cliente_id": 1000,
+        },
+    )
     assert response_put.status_code == 404
