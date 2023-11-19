@@ -264,25 +264,26 @@ def test_deve_atualizar_conta_a_pagar_com_forncedor_client():
             "descricao": "Curso de Python",
             "valor": 111,
             "tipo": "PAGAR",
-            "fornecedor_cliente_id": 1
+            "fornecedor_cliente_id": None
         })
     response_put = client.put("/contas-a-pagar-e-receber/1", json={
-        "descricao": "Curso de Python",
-        "valor": 111,
+        "descricao": "Curso de Python 1",
+        "valor": 1111,
         "tipo": "PAGAR",
         "fornecedor_cliente_id": 1
     })
     assert response_put.status_code == 200
     assert response_put.json() == {
         "id": 1,
-        "descricao": "Curso de Python",
-        "valor": 111,
+        "descricao": "Curso de Python 1",
+        "valor": 1111,
         "tipo": "PAGAR",
         "fornecedor": {
             "id": 1,
             "nome": "CPFL"
         }
     }
+
 
 def test_deve_retornar_erro_ao_atualizar_uma_conta_com_fornecedor_invalido():
     Base.metadata.drop_all(bind=engine)

@@ -31,14 +31,14 @@ def listar_fornecedor_client(
 
 
 @router.get(
-    "/{id_do_fornecedor_cliente}",
+    "/{fornecedor_cliente_id}",
     response_model=FornecedorClienteResponse,
     status_code=200,
 )
 def obter_fornecedor_cliente_por_id(
-    id_do_fornecedor_cliente: int, db: Session = Depends(get_db)
+    fornecedor_cliente_id: int, db: Session = Depends(get_db)
 ) -> List[FornecedorClienteResponse]:
-    return buscar_fornecedor_cliente_por_id(id_do_fornecedor_cliente, db)
+    return buscar_fornecedor_cliente_por_id(fornecedor_cliente_id, db)
 
 
 @router.post("", response_model=FornecedorClienteResponse, status_code=201)
@@ -57,16 +57,16 @@ def criar_fornecedor_cliente(
 
 
 @router.put(
-    "/{id_do_fornecedor_cliente}",
+    "/{fornecedor_cliente_id}",
     response_model=FornecedorClienteResponse,
     status_code=200,
 )
 def atualizar_forncedor_cliente(
-    id_do_fornecedor_cliente: int,
+    fornecedor_cliente_id: int,
     fornecedor_cliente_request: FornecedorClienteRequest,
     db: Session = Depends(get_db),
 ) -> FornecedorClienteResponse:
-    fornecedor_cliente = buscar_fornecedor_cliente_por_id(id_do_fornecedor_cliente, db)
+    fornecedor_cliente = buscar_fornecedor_cliente_por_id(fornecedor_cliente_id, db)
 
     fornecedor_cliente.nome = fornecedor_cliente_request.nome
 
@@ -77,18 +77,18 @@ def atualizar_forncedor_cliente(
     return fornecedor_cliente
 
 
-@router.delete("/{id_do_fornecedor_cliente}", status_code=204)
+@router.delete("/{fornecedor_cliente_id}", status_code=204)
 def deletar_fornecedor_cliente(
-    id_do_fornecedor_cliente: int, db: Session = Depends(get_db)
+    fornecedor_cliente_id: int, db: Session = Depends(get_db)
 ) -> None:
-    fornecedor_cliente = buscar_fornecedor_cliente_por_id(id_do_fornecedor_cliente, db)
+    fornecedor_cliente = buscar_fornecedor_cliente_por_id(fornecedor_cliente_id, db)
 
     db.delete(fornecedor_cliente)
     db.commit()
 
 
-def buscar_fornecedor_cliente_por_id(id_do_fornecedor_cliente: int, db: Session):
-    fornecedor_cliente = db.query(FornecedorCliente).get(id_do_fornecedor_cliente)
+def buscar_fornecedor_cliente_por_id(fornecedor_cliente_id: int, db: Session):
+    fornecedor_cliente = db.query(FornecedorCliente).get(fornecedor_cliente_id)
 
     if fornecedor_cliente is None:
         raise NotFound("Fornecedor Cliente")

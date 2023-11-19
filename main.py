@@ -1,9 +1,10 @@
 import uvicorn
 from fastapi import FastAPI
+
+from contas_a_pagar_e_receber.routers import contas_a_pagar_e_receber_router, fornecedor_cliente_router, \
+    fornecedor_cliente_vs_contas_router
 from shared.exceptions import NotFound
 from shared.exceptions_handle import not_found_exception_handler
-
-from contas_a_pagar_e_receber.routers import contas_a_pagar_e_receber_router, fornecedor_cliente_router
 
 # from shared.database import Base, engine
 
@@ -20,6 +21,7 @@ def oi_eu_sou_programador() -> str:
 
 app.include_router(contas_a_pagar_e_receber_router.router)
 app.include_router(fornecedor_cliente_router.router)
+app.include_router(fornecedor_cliente_vs_contas_router.router)
 app.add_exception_handler(NotFound, not_found_exception_handler)
 
 if __name__ == "__main__":
