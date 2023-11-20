@@ -5,6 +5,7 @@ from typing import List, Sequence
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import extract
 from sqlalchemy.orm import Session
 
 from contas_a_pagar_e_receber.models.conta_a_pagar_e_receber_model import (
@@ -71,6 +72,7 @@ def criar_conta(
     db: Session = Depends(get_db),
 ) -> ContaPagarReceber:
     valida_fornecedor(conta_a_pagar_e_receber_request.fornecedor_cliente_id, db)
+    print(recupera_numero_registros(db=db, ano=2023, mes=11))
     contas_a_pagar_e_receber: ContaPagarReceber = ContaPagarReceber(
         **conta_a_pagar_e_receber_request.dict()
     )
@@ -81,12 +83,21 @@ def criar_conta(
     return contas_a_pagar_e_receber
 
 
-@router.post("/{id_conta_a_pagar_e_receber}/baixar", response_model=ContaPagarReceberResponse, status_code=200)
-def baixar_conta(id_conta_a_pagar_e_receber: int, db: Session = Depends(get_db)) -> ContaPagarReceberResponse:
+@router.post(
+    "/{id_conta_a_pagar_e_receber}/baixar",
+    response_model=ContaPagarReceberResponse,
+    status_code=200,
+)
+def baixar_conta(
+    id_conta_a_pagar_e_receber: int, db: Session = Depends(get_db)
+) -> ContaPagarReceberResponse:
     conta_a_pagar_e_receber: ContaPagarReceber = busca_conta_por_id(
         id_conta_a_pagar_e_receber, db
     )
-    if conta_a_pagar_e_receber.esta_baixada and conta_a_pagar_e_receber.valor == conta_a_pagar_e_receber.valor_baixa:
+    if (
+        conta_a_pagar_e_receber.esta_baixada
+        and conta_a_pagar_e_receber.valor == conta_a_pagar_e_receber.valor_baixa
+    ):
         return conta_a_pagar_e_receber
     conta_a_pagar_e_receber.data_baixa = datetime.now()
     conta_a_pagar_e_receber.esta_baixada = True
@@ -151,3 +162,22 @@ def valida_fornecedor(fornecedor_cliente_id: int, db: Session) -> None:
         )
         if fornecedor_cliente is None:
             raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
+
+
+
+
+def valida_se_pode_registrar_novas_contas(db: Session, ano: int, mes: int) -> bool:
+    if recupera_numero_registros(db=db, ano=ano, mes=mes) > 100:
+        return False
+    return True
+
+
+def recupera_numero_registros(db: Session, ano: int, mes: int) -> int:
+    return (
+        db.query(ContaPagarReceber)
+        .filter(
+            extract("year", ContaPagarReceber.data_baixa) == ano,
+            extract("month", ContaPagarReceber.data_baixa) == mes
+        )
+        .count()
+    )
