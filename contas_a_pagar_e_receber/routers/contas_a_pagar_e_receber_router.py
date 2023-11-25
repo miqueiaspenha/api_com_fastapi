@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 from decimal import Decimal
 from enum import Enum
 from typing import List, Sequence
@@ -20,6 +20,8 @@ from shared.exceptions import NotFound
 
 router = APIRouter(prefix="/contas-a-pagar-e-receber")
 
+QUANTIDADE_PERMITIDA_POR_MES = 4
+
 
 class ContaPagarReceberTipoEnum(str, Enum):
     PAGAR = "PAGAR"
@@ -31,7 +33,8 @@ class ContaPagarReceberResponse(BaseModel):
     descricao: str
     valor: Decimal
     tipo: str
-    data_baixa: datetime | None = None
+    data_previsao: date
+    data_baixa: date | None = None
     valor_baixa: Decimal | None = None
     esta_baixada: bool | None = None
     fornecedor: FornecedorClienteResponse | None = None
@@ -45,6 +48,7 @@ class ContaPagarReceberRequest(BaseModel):
     valor: Decimal = Field(gt=0)
     tipo: ContaPagarReceberTipoEnum
     fornecedor_cliente_id: int | None = None
+    data_previsao: date
 
 
 @router.get("/", response_model=List[ContaPagarReceberResponse])
@@ -72,7 +76,9 @@ def criar_conta(
     db: Session = Depends(get_db),
 ) -> ContaPagarReceber:
     valida_fornecedor(conta_a_pagar_e_receber_request.fornecedor_cliente_id, db)
-    print(recupera_numero_registros(db=db, ano=2023, mes=11))
+    valida_se_pode_registrar_novas_contas(
+        conta_a_pagar_e_receber_request=conta_a_pagar_e_receber_request, db=db
+    )
     contas_a_pagar_e_receber: ContaPagarReceber = ContaPagarReceber(
         **conta_a_pagar_e_receber_request.dict()
     )
@@ -99,7 +105,7 @@ def baixar_conta(
         and conta_a_pagar_e_receber.valor == conta_a_pagar_e_receber.valor_baixa
     ):
         return conta_a_pagar_e_receber
-    conta_a_pagar_e_receber.data_baixa = datetime.now()
+    conta_a_pagar_e_receber.data_baixa = date.today()
     conta_a_pagar_e_receber.esta_baixada = True
     conta_a_pagar_e_receber.valor_baixa = conta_a_pagar_e_receber.valor
     db.add(conta_a_pagar_e_receber)
@@ -164,20 +170,30 @@ def valida_fornecedor(fornecedor_cliente_id: int, db: Session) -> None:
             raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
 
 
-
-
-def valida_se_pode_registrar_novas_contas(db: Session, ano: int, mes: int) -> bool:
-    if recupera_numero_registros(db=db, ano=ano, mes=mes) > 100:
-        return False
-    return True
+def valida_se_pode_registrar_novas_contas(
+    conta_a_pagar_e_receber_request: ContaPagarReceberRequest, db: Session
+) -> None:
+    if (
+        recupera_numero_registros(
+            db=db,
+            ano=conta_a_pagar_e_receber_request.data_previsao.year,
+            mes=conta_a_pagar_e_receber_request.data_previsao.month,
+        )
+        >= QUANTIDADE_PERMITIDA_POR_MES
+    ):
+        raise HTTPException(
+            status_code=422, detail="Você não pode mais lançar contas para esse mês"
+        )
 
 
 def recupera_numero_registros(db: Session, ano: int, mes: int) -> int:
     return (
         db.query(ContaPagarReceber)
         .filter(
-            extract("year", ContaPagarReceber.data_baixa) == ano,
-            extract("month", ContaPagarReceber.data_baixa) == mes
+            extract("year", ContaPagarReceber.data_previsao) == ano,
+        )
+        .filter(
+            extract("month", ContaPagarReceber.data_previsao) == mes,
         )
         .count()
     )
