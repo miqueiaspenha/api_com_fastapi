@@ -35,18 +35,32 @@ def test_deve_listar_contas_de_um_fornecdor_cliente():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     client.post("/fornecedor-cliente", json={"nome": "CPFL"})
-    client.post("/contas-a-pagar-e-receber", json={
-        "descricao": "Curso de Python",
-        "valor": 111,
-        "tipo": "PAGAR",
-        "fornecedor_cliente_id": 1
-    })
-    client.post("/contas-a-pagar-e-receber", json={
-        "descricao": "Curso de Java",
-        "valor": 112,
-        "tipo": "PAGAR",
-        "fornecedor_cliente_id": 1
-    })
+    client.post(
+        "/contas-a-pagar-e-receber",
+        json={
+            "descricao": "Curso de Python",
+            "valor": 111,
+            "tipo": "PAGAR",
+            "fornecedor_cliente_id": 1,
+            "valor_baixa": None,
+            "data_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
+        },
+    )
+    client.post(
+        "/contas-a-pagar-e-receber",
+        json={
+            "descricao": "Curso de Java",
+            "valor": 112,
+            "tipo": "PAGAR",
+            "fornecedor_cliente_id": 1,
+            "valor_baixa": None,
+            "data_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
+        },
+    )
 
     response_get = client.get("/fornecedor-cliente/1/contas-a-pagar-e-receber")
     assert response_get.status_code == 200

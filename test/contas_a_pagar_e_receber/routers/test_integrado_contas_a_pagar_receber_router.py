@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from contas_a_pagar_e_receber.routers.contas_a_pagar_e_receber_router import QUANTIDADE_PERMITIDA_POR_MES
 from main import app
 from shared.database import Base
 from shared.dependencies import get_db
@@ -35,8 +36,18 @@ def test_deve_listar_contas_a_pagar_e_receber():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
-    conta1 = {"descricao": "aluguel", "valor": "1000.5", "tipo": "PAGAR"}
-    conta2 = {"descricao": "Salario", "valor": "5000", "tipo": "RECEBER"}
+    conta1 = {
+        "descricao": "aluguel",
+        "valor": "1000.5",
+        "tipo": "PAGAR",
+        "data_previsao": "2022-11-29",
+    }
+    conta2 = {
+        "descricao": "Salario",
+        "valor": "5000",
+        "tipo": "RECEBER",
+        "data_previsao": "2022-11-29",
+    }
 
     client.post("/contas-a-pagar-e-receber", json=conta1)
     client.post("/contas-a-pagar-e-receber", json=conta2)
@@ -53,6 +64,7 @@ def test_deve_listar_contas_a_pagar_e_receber():
             "valor_baixa": None,
             "data_baixa": None,
             "esta_baixada": False,
+            "data_previsao": "2022-11-29",
         },
         {
             "id": 2,
@@ -63,6 +75,7 @@ def test_deve_listar_contas_a_pagar_e_receber():
             "valor_baixa": None,
             "data_baixa": None,
             "esta_baixada": False,
+            "data_previsao": "2022-11-29",
         },
     ]
 
@@ -76,6 +89,7 @@ def test_deve_retornar_uma_conta_a_pagar_e_receber():
         "valor": 1000.5,
         "tipo": "PAGAR",
         "fornecedor": None,
+        "data_previsao": "2022-11-29",
     }
 
     response_post = client.post(
@@ -110,6 +124,7 @@ def test_deve_criar_conta_a_pagar_e_receber():
         "valor": 333,
         "tipo": "PAGAR",
         "fornecedor": None,
+        "data_previsao": "2022-11-29",
     }
 
     response = client.post(
@@ -131,12 +146,30 @@ def test_deve_atualizar_conta_a_pagar_e_receber():
     Base.metadata.create_all(bind=engine)
     response_post = client.post(
         "/contas-a-pagar-e-receber",
-        json={"descricao": "Curso de Python", "valor": 333, "tipo": "PAGAR"},
+        json={
+            "descricao": "Curso de Python",
+            "valor": 333,
+            "tipo": "PAGAR",
+            "fornecedor": None,
+            "data_baixa": None,
+            "valor_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
+        },
     )
     contas_a_pagar_e_receber_id = response_post.json()["id"]
     response_put = client.put(
         f"/contas-a-pagar-e-receber/{contas_a_pagar_e_receber_id}",
-        json={"descricao": "Curso de Python", "valor": 111, "tipo": "PAGAR"},
+        json={
+            "descricao": "Curso de Python",
+            "valor": 111,
+            "tipo": "PAGAR",
+            "fornecedor": None,
+            "data_baixa": None,
+            "valor_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
+        },
     )
     assert response_put.status_code == 200
     assert response_put.json()["valor"] == 111
@@ -147,7 +180,16 @@ def test_deve_baixar_conta():
     Base.metadata.create_all(bind=engine)
     client.post(
         "/contas-a-pagar-e-receber",
-        json={"descricao": "Curso de Python", "valor": 333, "tipo": "PAGAR"},
+        json={
+            "descricao": "Curso de Python",
+            "valor": 333,
+            "tipo": "PAGAR",
+            "fornecedor": None,
+            "data_baixa": None,
+            "valor_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
+        },
     )
     response_post = client.post("/contas-a-pagar-e-receber/1/baixar")
     assert response_post.status_code == 200
@@ -160,12 +202,30 @@ def test_deve_baixar_conta_atualizada():
     Base.metadata.create_all(bind=engine)
     client.post(
         "/contas-a-pagar-e-receber",
-        json={"descricao": "Curso de Python", "valor": 333, "tipo": "PAGAR"},
+        json={
+            "descricao": "Curso de Python",
+            "valor": 333,
+            "tipo": "PAGAR",
+            "fornecedor": None,
+            "data_baixa": None,
+            "valor_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
+        },
     )
     client.post("/contas-a-pagar-e-receber/1/baixar")
     client.put(
         f"/contas-a-pagar-e-receber/1",
-        json={"descricao": "Curso de Python", "valor": 444, "tipo": "PAGAR"},
+        json={
+            "descricao": "Curso de Python",
+            "valor": 444,
+            "tipo": "PAGAR",
+            "fornecedor": None,
+            "data_baixa": None,
+            "valor_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
+        },
     )
     response_post = client.post("/contas-a-pagar-e-receber/1/baixar")
     assert response_post.status_code == 200
@@ -180,7 +240,16 @@ def test_deve_retornar_nao_encontrado_para_id_nao_existente_na_atalizacao():
 
     response_get = client.put(
         "/contas-a-pagar-e-receber/100",
-        json={"descricao": "Curso de Python", "valor": 333, "tipo": "PAGAR"},
+        json={
+            "descricao": "Curso de Python",
+            "valor": 333,
+            "tipo": "PAGAR",
+            "fornecedor": None,
+            "data_baixa": None,
+            "valor_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
+        },
     )
     assert response_get.status_code == 404
 
@@ -191,7 +260,16 @@ def test_deve_apagar_conta_apagar_e_receber():
 
     response_post = client.post(
         "/contas-a-pagar-e-receber",
-        json={"descricao": "Curso de Python", "valor": 111, "tipo": "PAGAR"},
+        json={
+            "descricao": "Curso de Python",
+            "valor": 111,
+            "tipo": "PAGAR",
+            "fornecedor": None,
+            "data_baixa": None,
+            "valor_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
+        },
     )
     contas_a_pagar_e_receber_id = response_post.json()["id"]
 
@@ -275,6 +353,11 @@ def test_deve_criar_conta_a_pagar_e_receber_com_fornedor():
             "valor": 111,
             "tipo": "PAGAR",
             "fornecedor_cliente_id": 1,
+            "fornecedor": None,
+            "data_baixa": None,
+            "valor_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
         },
     )
     assert response_post.status_code == 201
@@ -287,6 +370,7 @@ def test_deve_criar_conta_a_pagar_e_receber_com_fornedor():
         "valor_baixa": None,
         "data_baixa": None,
         "esta_baixada": False,
+        "data_previsao": "2022-11-29",
     }
 
 
@@ -300,6 +384,10 @@ def test_deve_retornar_erro_ao_inserir_uma_nova_conta_com_fornecedor_invalido():
             "valor": 111,
             "tipo": "PAGAR",
             "fornecedor_cliente_id": 1000,
+            "valor_baixa": None,
+            "data_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
         },
     )
     assert response_post.status_code == 404
@@ -316,6 +404,10 @@ def test_deve_atualizar_conta_a_pagar_com_forncedor_client():
             "valor": 111,
             "tipo": "PAGAR",
             "fornecedor_cliente_id": None,
+            "valor_baixa": None,
+            "data_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
         },
     )
     response_put = client.put(
@@ -325,6 +417,10 @@ def test_deve_atualizar_conta_a_pagar_com_forncedor_client():
             "valor": 1111,
             "tipo": "PAGAR",
             "fornecedor_cliente_id": 1,
+            "valor_baixa": None,
+            "data_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
         },
     )
     assert response_put.status_code == 200
@@ -337,6 +433,7 @@ def test_deve_atualizar_conta_a_pagar_com_forncedor_client():
         "valor_baixa": None,
         "data_baixa": None,
         "esta_baixada": False,
+        "data_previsao": "2022-11-29",
     }
 
 
@@ -350,6 +447,10 @@ def test_deve_retornar_erro_ao_atualizar_uma_conta_com_fornecedor_invalido():
             "valor": 111,
             "tipo": "PAGAR",
             "fornecedor_cliente_id": None,
+            "valor_baixa": None,
+            "data_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
         },
     )
     response_put = client.put(
@@ -359,6 +460,29 @@ def test_deve_retornar_erro_ao_atualizar_uma_conta_com_fornecedor_invalido():
             "valor": 111,
             "tipo": "PAGAR",
             "fornecedor_cliente_id": 1000,
+            "valor_baixa": None,
+            "data_baixa": None,
+            "esta_baixada": False,
+            "data_previsao": "2022-11-29",
         },
     )
     assert response_put.status_code == 404
+
+
+def test_limite_de_registros_mensais():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    respostas = []
+    for i in range(0, QUANTIDADE_PERMITIDA_POR_MES + 1):
+        resposta = client.post(
+            "/contas-a-pagar-e-receber",
+            json={
+                "descricao": "Curso Python",
+                "valor": 1000.5,
+                "tipo": "PAGAR",
+                "data_previsao": "2022-11-29",
+            },
+        )
+        respostas.append(resposta)
+    assert respostas.pop().status_code == 422
+    assert all([r.status_code == 201 for r in respostas]) is True
